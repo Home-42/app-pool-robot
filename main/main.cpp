@@ -8,23 +8,11 @@
 Control::Bridge bridge(UART_NUM_1);
 Control::Control control(&bridge);
 
-void washTask(void *args) {
-    vTaskDelay(3000 / portTICK_PERIOD_MS);
-    std::cout << "RUNNING TASK" << std::endl;
-    bool error = control.runAction("GO@FRONT\n", [] (std::string res) {
-        return res == "OK\n";
-    });
-    std::cout << "ERROR: " << error << std::endl;
-
-    while (true) {
-        vTaskDelay(3000 / portTICK_PERIOD_MS);
-    }
-}
 
 extern "C" void app_main(void)
 {
     uart_config_t controlConfig = {
-        .baud_rate = 9600,
+        .baud_rate = 4800,
         .data_bits = UART_DATA_8_BITS,
         .parity    = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
@@ -32,9 +20,16 @@ extern "C" void app_main(void)
         .source_clk = UART_SCLK_APB,
     };
 
+//    Control::Pin controlPin = {
+//            .tx = 16,
+//            .rx = 17,
+//            .rts = 2,
+//            .cts = 2
+//    };
+
     Control::Pin controlPin = {
-        .tx = 16,
-        .rx = 17,
+        .tx = 32,
+        .rx = 13,
         .rts = 2,
         .cts = 2
     };
@@ -46,5 +41,28 @@ extern "C" void app_main(void)
 
     control.init();
 
-    xTaskCreate(washTask, "wash", 4096, nullptr, 3, nullptr);
+
+    xTaskCreate([] (void *args) {
+        Control::Axes axes{};
+
+        control.setColor({0, 255, 255});
+
+        control.setVelocity(100);
+        control.setMoving(Control::FRONT);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
+        control.setMoving(Control::STOP);
+
+//        control.setFlow(Control::RIGHT);
+//        vTaskDelay(2000 / portTICK_PERIOD_MS);
+//        control.setFlow(Control::LEFT);
+//        vTaskDelay(2000 / portTICK_PERIOD_MS);
+//        control.setFlow(Control::CENTER);
+
+        while (true) {
+            if (!control.getAngle(&axes)) {
+                std::cout << "X:" << axes.x << ", Y: " << axes.y << ", Z: " << axes.z << std::endl;
+            }
+            vTaskDelay(100 / portTICK_PERIOD_MS);
+        }
+    }, "wash", 10000, nullptr, 3, nullptr);
 }
