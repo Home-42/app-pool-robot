@@ -82,6 +82,18 @@ bool Control::checkOk(std::string res, void *args) {
     return res.find("OK") != std::string::npos;
 }
 
+Control::Flow Control::oppositeFlow(Flow moving) {
+    switch (moving) {
+        case LEFT:
+            return RIGHT;
+        case RIGHT:
+            return LEFT;
+        case CENTER:
+            break;
+    }
+    return CENTER;
+}
+
 
 [[noreturn]] void Control::Control::actionLoop() {
     ActionState oldState = this->actionState;
@@ -105,7 +117,7 @@ bool Control::checkOk(std::string res, void *args) {
 //                    std::cout << "PENDING" << std::endl;
                     oldState = this->actionState;
                 }
-                currentTime = esp_timer_get_time();
+                currentTime = esp_timer_get_time() / 1000;
                 if (currentTime - this->action.startAt > MAX_TIME_ACTION) {
                     this->actionState = ERROR;
                 } else {
@@ -177,13 +189,19 @@ bool Control::Control::runAction(std::string command, bool (*check)(std::string 
     this->action.command = std::move(command);
     this->action.check = check;
     this->action.args = args;
-    this->action.startAt = esp_timer_get_time();
+    this->action.startAt = esp_timer_get_time() / 1000;
     xSemaphoreGiveRecursive(this->actionMutex);
 
     while(this->actionState != DONE && this->actionState != ERROR) {
         vTaskDelay(15 / portTICK_PERIOD_MS);
     }
     bool error = this->actionState == ERROR;
+
+    if (error) {
+        ESP_LOGE("CONTROL", "Run %s", this->action.command.c_str());
+    } else {
+        ESP_LOGI("CONTROL", "Run %s", this->action.command.c_str());
+    }
 
     this->actionState = IDLE;
 
@@ -258,7 +276,7 @@ bool Control::Control::getAngle(Axes *angle) {
             a->z = std::stof(match[1]); // z
             a->x = std::stof(match[3]); // x
             a->y = std::stof(match[5]); // y
-            a->time = esp_timer_get_time();
+            a->time = esp_timer_get_time() / 1000;
             return true;
         } return false;
     };
@@ -274,9 +292,34 @@ bool Control::Control::getMag(Axes *mag) {
             a->z = std::stof(match[1]); // z
             a->x = std::stof(match[3]); // x
             a->y = std::stof(match[5]); // y
-            a->time = esp_timer_get_time();
+            a->time = esp_timer_get_time() / 1000;
             return true;
         } return false;
     };
     return this->runAction("G_M", check, mag);
+}
+
+void Control::Control::front() {
+    this->setPump(true);
+    this->setVelocity(100);
+    this->setMoving(FRONT);
+}
+
+void Control::Control::back() {
+    this->setPump(true);
+    this->setVelocity(100);
+    this->setMoving(BACK);
+}
+
+void Control::Control::stop() {
+    this->setPump(true);
+    this->setVelocity(100);
+    this->setMoving(BACK);
+}
+
+void Control::Axes::copyTo(Axes *axes) {
+    axes->x = this->x;
+    axes->y = this->y;
+    axes->z = this->z;
+    axes->time = this->time;
 }

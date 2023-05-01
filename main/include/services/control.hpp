@@ -17,7 +17,7 @@
 
 #define MAX_FAILURE_ACTION 4
 #define MAX_FAILURE_ACTION_READ 4
-#define MAX_TIME_ACTION 3000000 // In microsecond
+#define MAX_TIME_ACTION 3000
 
 namespace Control {
     struct Pin {
@@ -91,11 +91,14 @@ namespace Control {
         unsigned char blue;
     };
 
-    struct Axes {
+    class Axes {
+    public:
         float x;
         float y;
         float z;
         int64_t time;
+
+        void copyTo(Axes *axes);
     };
 
     struct ControlState {
@@ -107,6 +110,8 @@ namespace Control {
     };
 
     bool checkOk(std::string res, void *args);
+
+    Flow oppositeFlow(Flow moving);
 
     class Control {
     private:
@@ -130,6 +135,10 @@ namespace Control {
         bool setVelocity(unsigned int value);
         bool setFlow(Flow value);
         bool setColor(Color value);
+
+        void front();
+        void back();
+        void stop();
 
         bool getAngle(Axes *angle);
         bool getMag(Axes *mag);

@@ -2,6 +2,7 @@ set(
         SOURCES
         main.cpp
         services/control.cpp
+        services/wash.cpp
 )
 set(INCLUDE_DIRS .  include)
 
