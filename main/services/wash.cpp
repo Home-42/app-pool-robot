@@ -42,8 +42,8 @@ Wash::AngleDelta Wash::Wash::turn(Control::Flow flow, int minAngle, int skipTime
     do {
         control->setPump(false);
         control->setMoving(Control::BACK);
-        control->setFlow(Control::LEFT);
-        vTaskDelay(2300 / portTICK_PERIOD_MS);
+        control->setFlow(flow);
+        vTaskDelay(2500 / portTICK_PERIOD_MS);
         control->setMoving(Control::FRONT);
         vTaskDelay(3500 / portTICK_PERIOD_MS);
 
@@ -86,8 +86,10 @@ Wash::AngleDelta Wash::Wash::turn(Control::Flow flow, int minAngle, int skipTime
 
         Control::Flow flow = turn % 4 <= 1 ? Control::RIGHT : Control::LEFT;
 
-        if (this->turn(flow, TURN_ANGLE, SKIP_ACTION_TIME).skipTime) {
-            this->turn(Control::oppositeFlow(flow), TURN_ANGLE, SKIP_ACTION_TIME);
+        int turnAngle = randInt(TURN_ANGLE_MIN, TURN_ANGLE_MAX);
+
+        if (this->turn(flow, turnAngle, SKIP_ACTION_TIME).skipTime) {
+            this->turn(Control::oppositeFlow(flow), turnAngle, SKIP_ACTION_TIME);
             turn--;
         }
 

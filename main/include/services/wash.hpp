@@ -10,9 +10,10 @@
 #define WASH_TIME (int64_t)1*3600*1000
 #define BACK_RANDOM_FROM 10000
 #define BACK_RANDOM_TO 20000
-#define SKIP_ACTION_TIME 400000
+#define SKIP_ACTION_TIME 20000
 #define WALL_ANGLE 20
-#define TURN_ANGLE 90
+#define TURN_ANGLE_MIN 20
+#define TURN_ANGLE_MAX 50
 
 namespace Wash {
     struct AngleDelta {
